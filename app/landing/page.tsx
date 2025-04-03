@@ -1,5 +1,5 @@
 import React from "react";
-import FeatureSection from "./feature-section";
+// import FeatureSection from "./feature-section";
 import HeroSection from "./feature-section";
 // import HeroSection from "./feature-section2";
 

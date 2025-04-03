@@ -14,7 +14,7 @@ const properties = [
     title: "Waterfront",
     description:
       "Take a swim on the brim of the rooftop pools, tan closer to the sun",
-    image: "/images/1.jpeg",
+    image: "https://images.unsplash.com/photo-1540541338287-41700207dee6",
     color: "#e95c33",
   },
   {
@@ -22,7 +22,7 @@ const properties = [
     title: "Penthouse",
     description:
       "Experience luxury living at the highest level with panoramic city views",
-    image: "/images/2.jpeg",
+    image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750",
     color: "#3366cc",
   },
   {
@@ -30,14 +30,14 @@ const properties = [
     title: "Villa",
     description:
       "Secluded privacy with expansive grounds and elegant architecture",
-    image: "/images/3.jpeg",
+    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c",
     color: "#6b8e23",
   },
   {
     id: "estate",
     title: "Estate",
     description: "Sprawling luxury compounds with every amenity imaginable",
-    image: "/images/4.jpeg",
+    image: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d",
     color: "#9932cc",
   },
 ];
@@ -53,6 +53,9 @@ const FeatureSection = () => {
   const textSectionsRef = useRef<(HTMLDivElement | null)[]>([]);
   const loadedImagesCount = useRef(0);
   const totalImages = properties.length;
+  const customLineRef = useRef<SVGPathElement>(null);
+  const customLineAnimated = useRef(false);
+  const svgContainerRef = useRef<HTMLDivElement>(null);
 
   // Handle image loading to prevent FOUC (Flash of Unstyled Content)
   const handleImageLoaded = useCallback(() => {
@@ -61,6 +64,7 @@ const FeatureSection = () => {
       setImagesLoaded(true);
     }
   }, []);
+
   // Initialize animations after all images are loaded
   useEffect(() => {
     if (!imagesLoaded) return;
@@ -80,6 +84,15 @@ const FeatureSection = () => {
 
         const ctx = gsap.context(() => {
           if (isDesktop) {
+            // Set up the custom line initial state
+            if (customLineRef.current) {
+              gsap.set(customLineRef.current, {
+                strokeDasharray: customLineRef.current.getTotalLength(),
+                strokeDashoffset: customLineRef.current.getTotalLength(),
+                opacity: 0,
+              });
+            }
+
             // Desktop-specific animations
             gsap.from(headerRef.current, {
               y: -100,
@@ -89,8 +102,9 @@ const FeatureSection = () => {
             });
 
             gsap.set(cardsRef.current, { autoAlpha: 0, yPercent: 101 });
-            gsap.set(textSectionsRef.current, { autoAlpha: 0, y: 50 });
+            gsap.set(textSectionsRef.current, { autoAlpha: 0, y: 0 });
 
+            // Animate the first card
             gsap.to(cardsRef.current[0], {
               autoAlpha: 1,
               yPercent: 0,
@@ -98,6 +112,19 @@ const FeatureSection = () => {
               duration: 1.5,
               ease: "power2.out",
             });
+
+            // Animate the custom line with the first card
+            if (customLineRef.current && !customLineAnimated.current) {
+              gsap.to(customLineRef.current, {
+                strokeDashoffset: 0,
+                opacity: 1,
+                duration: 2,
+                ease: "power2.inOut",
+                onComplete: () => {
+                  customLineAnimated.current = true;
+                },
+              });
+            }
 
             gsap.to(textSectionsRef.current[0], {
               autoAlpha: 1,
@@ -115,7 +142,6 @@ const FeatureSection = () => {
                 trigger: sectionRef.current,
                 start: scrollStart,
                 end: scrollEnd,
-                markers: true,
                 scrub: 0.5,
                 onEnter: () => {
                   if (index === 0) return;
@@ -181,15 +207,6 @@ const FeatureSection = () => {
               start: "top top",
               end: "bottom bottom",
               pin: leftSectionRef.current,
-              markers: true,
-              // scrub: 0.2, // <--- Lower scrub so it catches up faster
-
-              // snap: {
-              //   snapTo: 1 / (properties.length - 1),
-              //   duration: { min: 0.2, max: 0.2 },
-              //   ease: "power1.inOut",
-              //   delay: 0,
-              // },
             });
 
             ScrollTrigger.create({
@@ -197,8 +214,17 @@ const FeatureSection = () => {
               start: "top top",
               end: "bottom bottom",
               pin: rightSectionRef.current,
-              markers: true,
             });
+
+            // Pin the SVG container with the section
+            if (svgContainerRef.current) {
+              ScrollTrigger.create({
+                trigger: sectionRef.current,
+                start: "top top",
+                end: "bottom bottom",
+                pin: svgContainerRef.current,
+              });
+            }
           } else if (isMobile) {
             // Mobile-specific animations
             gsap.from(headerRef.current, {
@@ -244,40 +270,6 @@ const FeatureSection = () => {
               ease: "power2.out",
             });
 
-            // // Make sure only the first item is visible initially
-            // if (textSectionsRef.current[0]) {
-            //   gsap.set(textSectionsRef.current[0], {
-            //     autoAlpha: 0,
-            //     xPercent: -101,
-            //   });
-            // }
-            // for (let i = 1; i < textSectionsRef.current.length; i++) {
-            //   if (textSectionsRef.current[i]) {
-            //     gsap.set(textSectionsRef.current[i], {
-            //       autoAlpha: 0,
-            //       xPercent: -101,
-            //       display: "none",
-            //     });
-            //   }
-            // }
-
-            // // Animate first card and text section in
-            // gsap.to(cardsRef.current[0], {
-            //   autoAlpha: 1,
-            //   xPercent: 0,
-            //   rotation: -5,
-            //   duration: 1.5,
-            //   ease: "power2.out",
-            // });
-
-            // gsap.to(textSectionsRef.current[0], {
-            //   autoAlpha: 1,
-            //   xPercent: 0,
-            //   duration: 1.5,
-            //   delay: 0.2,
-            //   ease: "power2.out",
-            // });
-
             // Set up scroll animations for each property
             properties.forEach((_, index) => {
               const scrollStart = `${index * 15}%`;
@@ -287,7 +279,6 @@ const FeatureSection = () => {
                 trigger: sectionRef.current,
                 start: scrollStart,
                 end: scrollEnd,
-                //markers: true,
                 scrub: 0.5,
                 onEnter: () => {
                   const rotation = index % 2 === 0 ? -5 : 5;
@@ -326,39 +317,6 @@ const FeatureSection = () => {
                       },
                     });
                   }
-                  // gsap.to(cardsRef.current[index], {
-                  //   autoAlpha: 1,
-                  //   xPercent: 0,
-                  //   rotation,
-                  //   duration: 0.8,
-                  //   ease: "power2.out",
-                  // });
-
-                  // Show current text section and animate it in from left
-                  // gsap.set(textSectionsRef.current[index], {
-                  //   display: "block",
-                  // });
-                  // gsap.to(textSectionsRef.current[index], {
-                  //   autoAlpha: 1,
-                  //   xPercent: 0,
-                  //   duration: 0.8,
-                  //   ease: "power2.out",
-                  // });
-
-                  // if (index > 0) {
-                  //   // Animate previous text out to left
-                  //   gsap.to(textSectionsRef.current[index - 1], {
-                  //     autoAlpha: 0,
-                  //     xPercent: -100,
-                  //     duration: 0.8,
-                  //     ease: "power2.in",
-                  //     onComplete: () => {
-                  //       gsap.set(textSectionsRef.current[index - 1], {
-                  //         display: "none",
-                  //       });
-                  //     },
-                  //   });
-                  // }
                 },
                 onLeaveBack: () => {
                   if (index === 0) return;
@@ -401,23 +359,6 @@ const FeatureSection = () => {
                       ease: "power2.out",
                       delay: 0.4,
                     });
-
-                    // gsap.set(cardsRef.current[index - 1], { display: "flex" });
-                    // gsap.to(cardsRef.current[index - 1], {
-                    //   autoAlpha: 1,
-                    //   xPercent: 0,
-                    //   rotation: (index - 1) % 2 === 0 ? -5 : 5,
-                    //   duration: 0.8,
-                    //   ease: "power2.out",
-                    // });
-
-                    // Animate previous card back in from right
-                    // gsap.to(cardsRef.current[index - 1], {
-                    //   autoAlpha: 1,
-                    //   xPercent: 0,
-                    //   duration: 0.8,
-                    //   ease: "power2.out",
-                    // });
                   }
                 },
               });
@@ -429,15 +370,6 @@ const FeatureSection = () => {
               start: `top-=${navbarHeight}px top`,
               end: `bottom-=${navbarHeight} bottom`,
               pin: leftSectionRef.current,
-              //markers: true,
-              // scrub: 0.2, // <--- Lower scrub so it catches up faster
-
-              // snap: {
-              //   snapTo: 1 / (properties.length - 1),
-              //   duration: { min: 0.2, max: 0.2 },
-              //   ease: "power1.inOut",
-              //   delay: 0,
-              // },
             });
 
             ScrollTrigger.create({
@@ -445,7 +377,6 @@ const FeatureSection = () => {
               start: `top-=${navbarHeight} top`,
               end: `bottom-=${navbarHeight} bottom`,
               pin: rightSectionRef.current,
-              markers: true,
             });
           }
         });
@@ -461,12 +392,11 @@ const FeatureSection = () => {
   }, [imagesLoaded]);
 
   // Generate tilt angles for the cards
-
   const tiltAngles = useMemo(
     () => properties.map((_, i) => (i % 2 === 0 ? 5 : -5)),
     [properties]
   );
-  console.log(tiltAngles);
+
   return (
     <div className="relative bg-white text-black">
       {/* Header */}
@@ -505,9 +435,35 @@ const FeatureSection = () => {
       <main className="relative h-screen mt-[65px] md:mt-0">
         {/* Properties Section */}
         <div
-          className="sectionRef flex w-full md:h-auto flex-col md:flex-row h-[400vh] min-h-[400vh] max-h-[400vh]"
+          className="sectionRef flex w-full md:h-auto flex-col md:flex-row h-[400vh] min-h-[400vh] max-h-[400vh] relative"
           ref={sectionRef}
         >
+          {/* Custom SVG Line - Desktop Only - Inside the section */}
+          <div
+            ref={svgContainerRef}
+            className={`absolute top-0 left-0 w-full h-80vh z-20 pointer-events-none hidden md:block mt-[100px] ${
+              !imagesLoaded
+                ? "opacity-0"
+                : "opacity-100 transition-opacity duration-500"
+            }`}
+            style={{ height: "80vh" }}
+          >
+            <svg
+              className="w-full h-full"
+              viewBox="0 0 1433 785"
+              preserveAspectRatio="none"
+              fill="none"
+            >
+              <path
+                ref={customLineRef}
+                d="M1.37674 179.558C272.335 -15.2288 393.385 152.317 420.04 260.438C449.601 392.026 412.067 639.341 366.609 727.764C309.787 838.294 283.963 762.596 295 694C304.632 634.137 382.639 210.76 802.879 77.5545C1014.56 10.4561 1382.74 -12.7566 1537.04 12.2127"
+                stroke="#E85432"
+                strokeWidth="3"
+                opacity="0"
+              />
+            </svg>
+          </div>
+
           {/* Left Section - Images */}
           <div
             className="leftSectionRef w-full md:w-1/2 relative h-[50vh] md:h-screen"
@@ -535,17 +491,13 @@ const FeatureSection = () => {
                   transform: `rotate(${
                     tiltAngles[index] + (index % 2 === 0 ? 1 : -1) * 5
                   }deg)`,
+                  zIndex: index === 0 ? 10 : 30 + index, // First card z-index 10, line is 20, second card is 32, etc.
                 }}
               >
                 <Image
                   src={property.image || "/placeholder.svg"}
                   alt={property.title}
                   className="w-auto h-[90%] md:h-[70%] object-cover self-center rounded-3xl border-8 border-white aspect-[3/4]"
-                  // style={{
-                  //   transform: `rotate(${
-                  //     tiltAngles[index] + (index % 2 === 0 ? 1 : -1) * 5
-                  //   }deg)`,
-                  // }}
                   width={280}
                   height={600}
                   onLoadingComplete={handleImageLoaded}
@@ -566,30 +518,20 @@ const FeatureSection = () => {
                 ref={(el) => (textSectionsRef.current[index] = el)}
                 style={{ visibility: imagesLoaded ? "visible" : "hidden" }}
               >
-                <div className="h-full flex flex-col items-start justify-start px-6 md:px-12 md:justify-center">
-                  <div
-                    className="w-full h-1 mb-6 rounded hidden md:block"
-                    style={{ backgroundColor: property.color }}
-                  ></div>
-                  <h2 className="text-3xl md:text-6xl font-medium mb-4">
+                <div className="h-full flex flex-col items-center justify-start px-6 md:px-12 md:justify-center md:items-start mb-30 md:mb-0">
+                  <h2 className="text-3xl md:text-4xl font-medium mb-4">
                     {property.title}
                   </h2>
-                  <p className="text-sm md:text-2xl font-light max-w-md text-gray-500">
+                  <p className="text-sm md:text-lg font-light max-w-md text-gray-500 text-center md:text-left">
+                    {property.description}
+                    {property.description}
                     {property.description}
                   </p>
-                  <button
-                    className="mt-4 px-6 py-3 rounded-full border-2 hover:bg-white hover:text-black transition-colors duration-300 md:mt-8"
-                    style={{ borderColor: property.color }}
-                  >
-                    Explore {property.title} Properties
-                  </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
-
-        {/* Dream Home Section */}
         <div className="relative py-24 px-6 md:px-12 overflow-hidden">
           <div className="absolute inset-0 z-0">
             <div className="absolute inset-0 bg-gradient-to-b from-black/80 to-black/40 z-10"></div>
@@ -665,6 +607,26 @@ const FeatureSection = () => {
               </div>
             </div>
           </div>
+        </div>
+        {/* Scroll Indicator */}
+        <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 z-50 flex flex-col items-center">
+          <div className="w-8 h-14 rounded-full border-2 border-[#e95c33] flex justify-center overflow-hidden mb-2">
+            <div
+              className="w-1 h-1 bg-[#e95c33] rounded-full mt-3"
+              ref={(el) => {
+                if (el && imagesLoaded) {
+                  gsap.to(el, {
+                    height: 15,
+                    duration: 0.6,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: "power1.inOut",
+                  });
+                }
+              }}
+            />
+          </div>
+          <span className="text-1xl text-[#e95c33]">Scroll</span>
         </div>
       </main>
     </div>
