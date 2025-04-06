@@ -9,8 +9,8 @@ const page = () => {
     <div className="overflow-x-hidden">
       {/* Section 1 */}
       <FeatureSection />
-      {/* <ApartmentSelection /> */}
-      {/* <DummySection /> */}
+      <ApartmentSelection />
+      <DummySection />
     </div>
   );
 };
